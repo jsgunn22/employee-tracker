@@ -19,8 +19,16 @@ const db = mysql.createConnection(
 );
 
 db.query("SELECT * FROM departments", (err, results) => {
-  let temp = results.findIndex((x) => x.name === "Legal");
-  console.log(results[temp].id);
+  console.table(results);
+});
+
+const sql = `INSERT INTO employees (id, first_name, last_name) VALUES (?, ?, ?)`;
+const emp = [9, "Jeffrey", "Gunn"];
+
+db.query(sql, emp);
+
+db.query("SELECT * FROM employees", (err, results) => {
+  console.table(results);
 });
 
 app.listen(PORT, () => {
