@@ -368,6 +368,140 @@ const start = () => {
                 });
               });
           });
+        } else if (answer.start == "Delete Department") {
+          db.query("SELECT * FROM departments", (err, results) => {
+            const existingDepts = results.map(({ name }) => name);
+
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getDept",
+                  message: "Which Department would you like to delete?",
+                  choices: existingDepts,
+                },
+              ])
+              .then((a) => {
+                inquirer
+                  .prompt([
+                    {
+                      type: "confirm",
+                      name: "check",
+                      message: `Are you sure you want to delete ${a.getDept} from Departments?  This action can not be undone.`,
+                    },
+                  ])
+                  .then((b) => {
+                    if (b) {
+                      let chosenDeptId;
+
+                      db.query("SELECT * FROM departments", (err, res) => {
+                        chosenDeptId =
+                          res[res.findIndex((x) => x.name == a.getDept)].id;
+
+                        const sql = `DELETE FROM departments WHERE id = ${chosenDeptId}`;
+                        db.query(sql);
+                        console.log(
+                          `${a.getDept} has been deleted from Departments`
+                        );
+                      });
+                    } else {
+                      console.log(`Delete Department cancelled`);
+                    }
+                    askQuestions();
+                  });
+              });
+          });
+        } else if (answer.start == "Delete Role") {
+          db.query("SELECT * FROM roles", (err, results) => {
+            const existingRoles = results.map(({ title }) => title);
+
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getRole",
+                  message: "Which Role would you like to delete?",
+                  choices: existingRoles,
+                },
+              ])
+              .then((a) => {
+                inquirer
+                  .prompt([
+                    {
+                      type: "confirm",
+                      name: "check",
+                      message: `Are you sure you want to delete ${a.getRole} from Roles?  This action can not be undone.`,
+                    },
+                  ])
+                  .then((b) => {
+                    if (b) {
+                      let chosenRoleId;
+
+                      db.query("SELECT * FROM roles", (err, res) => {
+                        chosenRoleId =
+                          res[res.findIndex((x) => x.title == a.getRole)].id;
+
+                        const sql = `DELETE FROM roles WHERE id = ${chosenRoleId}`;
+                        db.query(sql);
+                        console.log(`${a.getRole} has been deleted from Roles`);
+                      });
+                    } else {
+                      console.log(`Delete Role cancelled`);
+                    }
+                    askQuestions();
+                  });
+              });
+          });
+        } else if (answer.start == "Delete Employee") {
+          db.query("SELECT * FROM employees", (err, results) => {
+            const existingEmployees = results.map(
+              ({ first_name, last_name }) => first_name + " " + last_name
+            );
+
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getEmp",
+                  message: "Which Employee would you like to delete?",
+                  choices: existingEmployees,
+                },
+              ])
+              .then((a) => {
+                inquirer
+                  .prompt([
+                    {
+                      type: "confirm",
+                      name: "check",
+                      message: `Are you sure you want to delete ${a.getEmp} from the Employees table?  This action can not be undone.`,
+                    },
+                  ])
+                  .then((b) => {
+                    if (b) {
+                      let chosenEmpId;
+
+                      db.query("SELECT * FROM employees", (err, res) => {
+                        chosenEmpId =
+                          res[
+                            res.findIndex(
+                              (x) =>
+                                `${x.first_name} ${x.last_name}` == a.getEmp
+                            )
+                          ].id;
+
+                        const sql = `DELETE FROM employees WHERE id = ${chosenEmpId}`;
+                        db.query(sql);
+                        console.log(
+                          `${a.getEmp} has been deleted from Employees`
+                        );
+                      });
+                    } else {
+                      console.log(`Delete Employee cancelled`);
+                    }
+                    askQuestions();
+                  });
+              });
+          });
         }
       });
   };
