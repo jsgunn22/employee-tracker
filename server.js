@@ -370,6 +370,7 @@ const start = () => {
           });
         } else if (answer.start == "Delete Department") {
           db.query("SELECT * FROM departments", (err, results) => {
+            // gets the list of existing departments for getDept prompt
             const existingDepts = results.map(({ name }) => name);
 
             inquirer
@@ -382,6 +383,7 @@ const start = () => {
                 },
               ])
               .then((a) => {
+                // delete confirmation prompt
                 inquirer
                   .prompt([
                     {
@@ -391,15 +393,19 @@ const start = () => {
                     },
                   ])
                   .then((b) => {
-                    if (b) {
+                    // if the user confirms delete
+                    if (b.check) {
                       let chosenDeptId;
 
+                      // gets the id from the dept selected
                       db.query("SELECT * FROM departments", (err, res) => {
                         chosenDeptId =
                           res[res.findIndex((x) => x.name == a.getDept)].id;
 
+                        // deletes the department by id
                         const sql = `DELETE FROM departments WHERE id = ${chosenDeptId}`;
                         db.query(sql);
+
                         console.log(
                           `${a.getDept} has been deleted from Departments`
                         );
@@ -413,6 +419,7 @@ const start = () => {
           });
         } else if (answer.start == "Delete Role") {
           db.query("SELECT * FROM roles", (err, results) => {
+            // gets a list of existing roles for getRole prompt
             const existingRoles = results.map(({ title }) => title);
 
             inquirer
@@ -425,6 +432,7 @@ const start = () => {
                 },
               ])
               .then((a) => {
+                // confirmation for delete Role
                 inquirer
                   .prompt([
                     {
@@ -434,15 +442,19 @@ const start = () => {
                     },
                   ])
                   .then((b) => {
-                    if (b) {
+                    // if the user confirms delete
+                    if (b.check) {
                       let chosenRoleId;
 
+                      // gets the id from the selected roles
                       db.query("SELECT * FROM roles", (err, res) => {
                         chosenRoleId =
                           res[res.findIndex((x) => x.title == a.getRole)].id;
 
+                        // deletes role by id
                         const sql = `DELETE FROM roles WHERE id = ${chosenRoleId}`;
                         db.query(sql);
+
                         console.log(`${a.getRole} has been deleted from Roles`);
                       });
                     } else {
@@ -454,6 +466,7 @@ const start = () => {
           });
         } else if (answer.start == "Delete Employee") {
           db.query("SELECT * FROM employees", (err, results) => {
+            // gets a list of existing employees
             const existingEmployees = results.map(
               ({ first_name, last_name }) => first_name + " " + last_name
             );
@@ -468,6 +481,7 @@ const start = () => {
                 },
               ])
               .then((a) => {
+                // confirmation for delete employee
                 inquirer
                   .prompt([
                     {
@@ -477,9 +491,11 @@ const start = () => {
                     },
                   ])
                   .then((b) => {
-                    if (b) {
+                    // if user confirms delete
+                    if (b.check) {
                       let chosenEmpId;
 
+                      // gets the id from the selected employee
                       db.query("SELECT * FROM employees", (err, res) => {
                         chosenEmpId =
                           res[
@@ -488,9 +504,10 @@ const start = () => {
                                 `${x.first_name} ${x.last_name}` == a.getEmp
                             )
                           ].id;
-
+                        // deletes employee by id
                         const sql = `DELETE FROM employees WHERE id = ${chosenEmpId}`;
                         db.query(sql);
+
                         console.log(
                           `${a.getEmp} has been deleted from Employees`
                         );
