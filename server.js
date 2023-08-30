@@ -220,17 +220,151 @@ const start = () => {
               .then((a) => {
                 let chosenDeptId;
                 db.query("SELECT * FROM departments", (err, res) => {
-                    // gets the id for the department that was chosen
-                  chosenDeptId = res[res.findIndex(i) = i.name === a.getDept].id
-                  inquirer.prompt([{type: 'input', name: 'deptName', message: 'What is the name of the Department?'}]).then((res) => {
+                  // gets the id for the department that was chosen
+                  chosenDeptId =
+                    res[res.findIndex((i) => i.name === a.getDept)].id;
+                  inquirer
+                    .prompt([
+                      {
+                        type: "input",
+                        name: "deptName",
+                        message: "What is the name of the Department?",
+                      },
+                    ])
+                    .then((res) => {
+                      // creates and executes the query to update the dept
+                      const sql = `UPDATE departments SET name = '${res.deptName}' WHERE id = ${chosenDeptId}`;
+                      db.query(sql);
 
-                    // creates and executes the query to update the dept 
-                    const sql = `UPDATE departments SET name = ${res.deptName} WHERE id = ${chosenDeptId}`
-                    db.query(sql)
+                      // restarts the app
+                      askQuestions();
+                    });
+                });
+              });
+          });
+        } else if (answer.start == "Update Role") {
+          // get the list of existing roles
+          db.query("SELECT * FROM roles", (err, results) => {
+            const existingRoles = results.map(({ title }) => title);
 
-                    // restarts the app
-                    askQuestions()
-                  })
+            // asks what role they would like to update
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getRole",
+                  message: "What role would you like to change?",
+                  choices: existingRoles,
+                },
+              ])
+              .then((a) => {
+                let chosenRoleId;
+                // gets the id from the role the user selected
+                db.query("SELECT * FROM roles", (err, res) => {
+                  chosenRoleId =
+                    res[res.findIndex((i) => i.title == a.getRole)].id;
+
+                  // prompts the user to update the following fields
+                  db.query("SELECT * FROM departments", (err, res) => {
+                    const depts = res.map(({ name }) => name);
+                    inquirer
+                      .prompt([
+                        {
+                          type: "input",
+                          name: "roleName",
+                          message: "What is the name of the Role?",
+                        },
+                        {
+                          type: "input",
+                          name: "salary",
+                          message: "What is the salary of the Role?",
+                        },
+                        {
+                          type: "list",
+                          name: "getDept",
+                          message: "What Department does the Role belong to?",
+                          choices: depts,
+                        },
+                      ])
+                      .then((a) => {
+                        // gets the id from the department that user has chosen during update
+                        db.query("SELECT * FROM departments", (err, res) => {
+                          const chosenDeptId =
+                            res[res.findIndex((x) => x.name == a.getDept)];
+                          // creates and executes the query to update the dept
+                          const sql = `UPDATE roles SET title = '${a.roleName}', salary = '${a.salary}' WHERE id = ${chosenRoleId}`; // NEED TO ADD DEPARTMENT ID
+                          db.query(sql);
+
+                          askQuestions();
+                        });
+                      });
+                  });
+                });
+              });
+          });
+        } else if (answer.start == "Update Employee") {
+          // gets the list of existing employees
+          db.query("SELECT * FROM employees", (err, results) => {
+            const existingEmployees = results.map(
+              ({ first_name, last_name }) => first_name + " " + last_name
+            );
+
+            // asks which employee they would like to update
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getEmp",
+                  message: "Which Employee would you like to update?",
+                  choices: existingEmployees,
+                },
+              ])
+              .then((a) => {
+                let chosenEmployeeId;
+                // gets the id from the employee that was selected
+                db.query("SELECT * FROM employees", (err, res) => {
+                  chosenEmployeeId =
+                    res[
+                      res.findIndex(
+                        (i) => `${i.first_name} ${i.last_name}` == a.getEmp
+                      )
+                    ].id;
+
+                  // prompts the user to update the following fields
+                  db.query("SELECT * FROM roles", (err, res) => {
+                    const roles = res.map(({ title }) => title);
+                    inquirer
+                      .prompt([
+                        {
+                          type: "input",
+                          name: "firstName",
+                          message: "What is the employee's first name?",
+                        },
+                        {
+                          type: "input",
+                          name: "lastName",
+                          message: "What is the employee's last name?",
+                        },
+                        {
+                          type: "list",
+                          name: "getRole",
+                          message: "What role does the employee fulfill?",
+                          choices: roles,
+                        },
+                      ])
+                      .then((a) => {
+                        // gets the id from the role that user has chosen during update
+                        db.query("SELECT * FROM roles", (err, res) => {
+                          const chosenRoleId =
+                            res[res.findIndex((x) => x.title == a.getRole)].id;
+
+                          const sql = `UPDATE employees SET first_name = '${a.firstName}', last_name = '${a.lastName}' WHERE id = ${chosenEmployeeId}`; // NEED TO ADD THE ROLE ID
+                          db.query(sql);
+
+                          askQuestions();
+                        });
+                      });
+                  });
                 });
               });
           });
