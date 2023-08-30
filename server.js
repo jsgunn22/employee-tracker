@@ -204,6 +204,36 @@ const start = () => {
                 });
               });
           });
+        } else if (answer.start == "Update Department") {
+          // gets the list of existing depts
+          db.query("SELECT * FROM departments", (err, results) => {
+            const existingDepts = results.map(({ name }) => name);
+            inquirer
+              .prompt([
+                {
+                  type: "list",
+                  name: "getDept",
+                  message: "Which Department would you like to update?",
+                  choices: existingDepts,
+                },
+              ])
+              .then((a) => {
+                let chosenDeptId;
+                db.query("SELECT * FROM departments", (err, res) => {
+                    // gets the id for the department that was chosen
+                  chosenDeptId = res[res.findIndex(i) = i.name === a.getDept].id
+                  inquirer.prompt([{type: 'input', name: 'deptName', message: 'What is the name of the Department?'}]).then((res) => {
+
+                    // creates and executes the query to update the dept 
+                    const sql = `UPDATE departments SET name = ${res.deptName} WHERE id = ${chosenDeptId}`
+                    db.query(sql)
+
+                    // restarts the app
+                    askQuestions()
+                  })
+                });
+              });
+          });
         }
       });
   };
