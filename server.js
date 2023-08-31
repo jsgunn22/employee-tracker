@@ -48,17 +48,20 @@ const start = () => {
       ])
       .then((answer) => {
         if (answer.start == "View All Departments") {
-          db.query("SELECT * FROM departments", (err, results) => {
+          const viewDept = `SELECT departments.department_name FROM departments`;
+          db.query(viewDept, (err, results) => {
             console.table(results);
             askQuestions();
           });
         } else if (answer.start == "View All Roles") {
-          db.query("SELECT * FROM roles", (err, results) => {
+          const viewRoles = `SELECT roles.position_title, roles.position_salary, departments.department_name FROM roles INNER JOIN departments ON roles.department_id = departments.id;`;
+          db.query(viewRoles, (err, results) => {
             console.table(results);
             askQuestions();
           });
         } else if (answer.start == "View All Employees") {
-          db.query("SELECT * FROM employees", (err, results) => {
+          const viewEmps = `SELECT employees.first_name, employees.last_name, roles.position_title, roles.position_salary, departments.department_name FROM employees INNER JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id;`;
+          db.query(viewEmps, (err, results) => {
             console.table(results);
             askQuestions();
           });
@@ -78,23 +81,24 @@ const start = () => {
                 id = results[results.length - 1].id + 1;
 
                 // creates the query string and values
-                const sql = `INSERT INTO departments (id, name) VALUES (?, ?)`;
+                const sql = `INSERT INTO departments (id, department_name) VALUES (?, ?)`;
                 const deptValues = [id, a.deptName];
 
                 // adds the new dept to the table
                 db.query(sql, deptValues);
 
-                // prints the new table and starts the app over
-                db.query("SELECT * FROM departments", (err, results) => {
-                  console.table(results);
-                  askQuestions();
-                });
+                console.log(
+                  `${a.deptName} was added as a department to the buisiness database`
+                );
+                askQuestions();
               });
             });
         } else if (answer.start == "Add Role") {
           db.query("SELECT * FROM departments", (err, results) => {
             // creates an array of all existing department names to use as choices for 'dept' prompt
-            const departments = results.map(({ name }) => name);
+            const departments = results.map(
+              ({ department_name }) => department_name
+            );
             inquirer
               .prompt([
                 {
@@ -120,7 +124,7 @@ const start = () => {
                 db.query("SELECT * FROM departments", (err, res) => {
                   // gets the id for the department that was selected
                   const chosenDeptId =
-                    res[res.findIndex((i) => i.name == a.dept)].id;
+                    res[res.findIndex((i) => i.department_name == a.dept)].id;
 
                   // gets the list of existing roles...
                   db.query("SELECT * FROM roles", (err, roles) => {
@@ -128,7 +132,7 @@ const start = () => {
                     id = roles[roles.length - 1].id + 1;
 
                     // creates the query string and values
-                    const sql = `INSERT INTO roles (id, title, salary) VALUES (?, ?, ?)`; // add deptId and '?' when dept id is linked in schema
+                    const sql = `INSERT INTO roles (id, position_title, position_salary, department_id) VALUES (?, ?, ?, ?)`; // add deptId and '?' when dept id is linked in schema
                     const roleValues = [
                       id,
                       a.roleName,
@@ -139,11 +143,10 @@ const start = () => {
                     // adds the new dept to the table
                     db.query(sql, roleValues);
 
-                    // prints the new table and starts the app over
-                    db.query("SELECT * FROM roles", (err, r) => {
-                      console.table(r);
-                      askQuestions();
-                    });
+                    console.log(
+                      `${a.roleName} was added as a role to the buisiness database`
+                    );
+                    askQuestions();
                   });
                 });
                 // gets the last item in the department table's id and adds 1 for the new item's id
@@ -151,7 +154,7 @@ const start = () => {
           });
         } else if (answer.start == "Add Employee") {
           db.query("SELECT * FROM roles", (err, results) => {
-            const roles = results.map(({ title }) => title);
+            const roles = results.map(({ position_title }) => position_title);
             inquirer
               .prompt([
                 {
@@ -177,14 +180,14 @@ const start = () => {
                 db.query("SELECT * FROM roles", (err, res) => {
                   // gets the id from the role that was chosen
                   const chosenRoleId =
-                    res[res.findIndex((i) => i.title == a.role)].id;
+                    res[res.findIndex((i) => i.position_title == a.role)].id;
 
                   // gets the existing employees to create a unique id based last employees id in the array
                   db.query("SELECT * FROM employees", (err, employees) => {
                     id = employees[employees.length - 1].id + 1;
 
                     // creates the query string and valuess
-                    const sql = `INSERT INTO employees (id, first_name, last_name) VALUES (?, ?, ?)`; // add roleId and '?' when role id is linked in schema
+                    const sql = `INSERT INTO employees (id, first_name, last_name, role_id) VALUES (?, ?, ?, ?)`; // add roleId and '?' when role id is linked in schema
                     const employeeValues = [
                       id,
                       a.firstName,
@@ -194,12 +197,10 @@ const start = () => {
 
                     // adds the new dept to the table
                     db.query(sql, employeeValues);
-
-                    // prints the new table and starts the app over
-                    db.query("SELECT * FROM employees", (err, e) => {
-                      console.table(e);
-                      askQuestions();
-                    });
+                    console.log(
+                      `${a.firstName} ${a.lastName} was added as an employee to the buisiness database`
+                    );
+                    askQuestions();
                   });
                 });
               });
@@ -207,7 +208,9 @@ const start = () => {
         } else if (answer.start == "Update Department") {
           // gets the list of existing depts
           db.query("SELECT * FROM departments", (err, results) => {
-            const existingDepts = results.map(({ name }) => name);
+            const existingDepts = results.map(
+              ({ department_name }) => department_name
+            );
             inquirer
               .prompt([
                 {
@@ -222,7 +225,8 @@ const start = () => {
                 db.query("SELECT * FROM departments", (err, res) => {
                   // gets the id for the department that was chosen
                   chosenDeptId =
-                    res[res.findIndex((i) => i.name === a.getDept)].id;
+                    res[res.findIndex((i) => i.department_name === a.getDept)]
+                      .id;
                   inquirer
                     .prompt([
                       {
@@ -233,7 +237,7 @@ const start = () => {
                     ])
                     .then((res) => {
                       // creates and executes the query to update the dept
-                      const sql = `UPDATE departments SET name = '${res.deptName}' WHERE id = ${chosenDeptId}`;
+                      const sql = `UPDATE departments SET department_name = '${res.deptName}' WHERE id = ${chosenDeptId}`;
                       db.query(sql);
 
                       // restarts the app
@@ -245,7 +249,9 @@ const start = () => {
         } else if (answer.start == "Update Role") {
           // get the list of existing roles
           db.query("SELECT * FROM roles", (err, results) => {
-            const existingRoles = results.map(({ title }) => title);
+            const existingRoles = results.map(
+              ({ position_title }) => position_title
+            );
 
             // asks what role they would like to update
             inquirer
@@ -262,11 +268,13 @@ const start = () => {
                 // gets the id from the role the user selected
                 db.query("SELECT * FROM roles", (err, res) => {
                   chosenRoleId =
-                    res[res.findIndex((i) => i.title == a.getRole)].id;
+                    res[res.findIndex((i) => i.position_title == a.getRole)].id;
 
                   // prompts the user to update the following fields
                   db.query("SELECT * FROM departments", (err, res) => {
-                    const depts = res.map(({ name }) => name);
+                    const depts = res.map(
+                      ({ department_name }) => department_name
+                    );
                     inquirer
                       .prompt([
                         {
@@ -292,7 +300,7 @@ const start = () => {
                           const chosenDeptId =
                             res[res.findIndex((x) => x.name == a.getDept)];
                           // creates and executes the query to update the dept
-                          const sql = `UPDATE roles SET title = '${a.roleName}', salary = '${a.salary}' WHERE id = ${chosenRoleId}`; // NEED TO ADD DEPARTMENT ID
+                          const sql = `UPDATE roles SET position_title = '${a.roleName}', position_salary = '${a.salary}', department_id = '${chosenDeptId}' WHERE id = ${chosenRoleId}`; // NEED TO ADD DEPARTMENT ID
                           db.query(sql);
 
                           askQuestions();
@@ -332,7 +340,9 @@ const start = () => {
 
                   // prompts the user to update the following fields
                   db.query("SELECT * FROM roles", (err, res) => {
-                    const roles = res.map(({ title }) => title);
+                    const roles = res.map(
+                      ({ position_title }) => position_title
+                    );
                     inquirer
                       .prompt([
                         {
@@ -356,9 +366,13 @@ const start = () => {
                         // gets the id from the role that user has chosen during update
                         db.query("SELECT * FROM roles", (err, res) => {
                           const chosenRoleId =
-                            res[res.findIndex((x) => x.title == a.getRole)].id;
+                            res[
+                              res.findIndex(
+                                (x) => x.position_title == a.getRole
+                              )
+                            ].id;
 
-                          const sql = `UPDATE employees SET first_name = '${a.firstName}', last_name = '${a.lastName}' WHERE id = ${chosenEmployeeId}`; // NEED TO ADD THE ROLE ID
+                          const sql = `UPDATE employees SET first_name = '${a.firstName}', last_name = '${a.lastName}', role_id = '${chosenRoleId}' WHERE id = ${chosenEmployeeId}`; // NEED TO ADD THE ROLE ID
                           db.query(sql);
 
                           askQuestions();
@@ -371,7 +385,9 @@ const start = () => {
         } else if (answer.start == "Delete Department") {
           db.query("SELECT * FROM departments", (err, results) => {
             // gets the list of existing departments for getDept prompt
-            const existingDepts = results.map(({ name }) => name);
+            const existingDepts = results.map(
+              ({ department_name }) => department_name
+            );
 
             inquirer
               .prompt([
@@ -400,7 +416,9 @@ const start = () => {
                       // gets the id from the dept selected
                       db.query("SELECT * FROM departments", (err, res) => {
                         chosenDeptId =
-                          res[res.findIndex((x) => x.name == a.getDept)].id;
+                          res[
+                            res.findIndex((x) => x.department_name == a.getDept)
+                          ].id;
 
                         // deletes the department by id
                         const sql = `DELETE FROM departments WHERE id = ${chosenDeptId}`;
@@ -420,7 +438,9 @@ const start = () => {
         } else if (answer.start == "Delete Role") {
           db.query("SELECT * FROM roles", (err, results) => {
             // gets a list of existing roles for getRole prompt
-            const existingRoles = results.map(({ title }) => title);
+            const existingRoles = results.map(
+              ({ position_title }) => position_title
+            );
 
             inquirer
               .prompt([
@@ -449,7 +469,9 @@ const start = () => {
                       // gets the id from the selected roles
                       db.query("SELECT * FROM roles", (err, res) => {
                         chosenRoleId =
-                          res[res.findIndex((x) => x.title == a.getRole)].id;
+                          res[
+                            res.findIndex((x) => x.position_title == a.getRole)
+                          ].id;
 
                         // deletes role by id
                         const sql = `DELETE FROM roles WHERE id = ${chosenRoleId}`;
