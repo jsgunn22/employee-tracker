@@ -26,6 +26,22 @@ Within the terminal, user will need to source the schema and seeds files to init
 
 Usage is open source. Anyone with access to the github repo is able to use the application. Users will run the application from their terminal and their personal sql database
 
+In the termincal from `employee-tracker` directory;
+
+```md
+source db/schema.sql
+```
+
+```md
+source db/seeds.sql
+```
+
+exit sql
+
+```md
+npm start
+```
+
 ## Credits
 
 - Jeffrey - Primary Developers
@@ -38,3 +54,10 @@ There is no license for this application. Content is open source
 
 - github repository - https://github.com/jsgunn22/employee-tracker
 - Video of the application running - https://drive.google.com/file/d/1iyfXvF3zBwytp5GnDRrXh07uw0ZiKoyk/view
+```
+````
+`````
+
+```
+
+```
