@@ -18,12 +18,12 @@ VALUES
 
 INSERT INTO employees 
 VALUES
-    (1, "John", "Doe", 1),
-    (2, "Mike", "Chan", 2),
-    (3, "Ashley", "Rodriguez", 3),
-    (4, "Kevin", "Tupik", 4),
-    (5, "Kunal", "Singh", 5),
-    (6, "Malia", "Brown", 6),
-    (7, "Sarah", "Lourd", 7),
-    (8, "Tom", "Allen", 8);
+    (1, "John", "Doe", 1, 'n/a'),
+    (2, "Mike", "Chan", 2, 'John Doe'),
+    (3, "Ashley", "Rodriguez", 3, 'n/a'),
+    (4, "Kevin", "Tupik", 4, 'Ashley Rodriguez'),
+    (5, "Kunal", "Singh", 5, 'n/a'),
+    (6, "Malia", "Brown", 6, 'Kunal Singh'),
+    (7, "Sarah", "Lourd", 7, 'n/a'),
+    (8, "Tom", "Allen", 8, 'Lawyer');
 

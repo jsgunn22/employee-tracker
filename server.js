@@ -48,19 +48,19 @@ const start = () => {
       ])
       .then((answer) => {
         if (answer.start == "View All Departments") {
-          const viewDept = `SELECT departments.department_name FROM departments`;
+          const viewDept = `SELECT * FROM departments`;
           db.query(viewDept, (err, results) => {
             console.table(results);
             askQuestions();
           });
         } else if (answer.start == "View All Roles") {
-          const viewRoles = `SELECT roles.position_title, roles.position_salary, departments.department_name FROM roles INNER JOIN departments ON roles.department_id = departments.id;`;
+          const viewRoles = `SELECT roles.id, roles.position_title, roles.position_salary, departments.department_name FROM roles INNER JOIN departments ON roles.department_id = departments.id;`;
           db.query(viewRoles, (err, results) => {
             console.table(results);
             askQuestions();
           });
         } else if (answer.start == "View All Employees") {
-          const viewEmps = `SELECT employees.first_name, employees.last_name, roles.position_title, roles.position_salary, departments.department_name FROM employees INNER JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id;`;
+          const viewEmps = `SELECT employees.id, employees.first_name, employees.last_name, roles.position_title, roles.position_salary, departments.department_name, employees.manager FROM employees INNER JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id;`;
           db.query(viewEmps, (err, results) => {
             console.table(results);
             askQuestions();
@@ -155,55 +155,74 @@ const start = () => {
         } else if (answer.start == "Add Employee") {
           db.query("SELECT * FROM roles", (err, results) => {
             const roles = results.map(({ position_title }) => position_title);
-            inquirer
-              .prompt([
-                {
-                  type: "input",
-                  name: "firstName",
-                  message: "What is the Employee's first Name",
-                },
-                {
-                  type: "input",
-                  name: "lastName",
-                  message: "What is the Employee's last name",
-                },
-                {
-                  type: "list",
-                  name: "role",
-                  message: "What role does the Employee fulfill?",
-                  choices: roles,
-                },
-              ])
-              .then((a) => {
-                let id;
-                // gets the list of existing roles
-                db.query("SELECT * FROM roles", (err, res) => {
-                  // gets the id from the role that was chosen
-                  const chosenRoleId =
-                    res[res.findIndex((i) => i.position_title == a.role)].id;
+            db.query("SELECT * FROM employees", (err, res) => {
+              const managers = res.map(
+                ({ first_name, last_name }) => first_name + " " + last_name
+              );
+              const noManager = "Does not report to superior.";
+              managers.push(noManager);
+              inquirer
+                .prompt([
+                  {
+                    type: "input",
+                    name: "firstName",
+                    message: "What is the Employee's first Name",
+                  },
+                  {
+                    type: "input",
+                    name: "lastName",
+                    message: "What is the Employee's last name",
+                  },
+                  {
+                    type: "list",
+                    name: "role",
+                    message: "What role does the Employee fulfill?",
+                    choices: roles,
+                  },
+                  {
+                    type: "list",
+                    name: "manager",
+                    message: "Who does this employee report too?",
+                    choices: managers,
+                  },
+                ])
+                .then((a) => {
+                  let id;
+                  // gets the list of existing roles
+                  db.query("SELECT * FROM roles", (err, res) => {
+                    // gets the id from the role that was chosen
+                    const chosenRoleId =
+                      res[res.findIndex((i) => i.position_title == a.role)].id;
 
-                  // gets the existing employees to create a unique id based last employees id in the array
-                  db.query("SELECT * FROM employees", (err, employees) => {
-                    id = employees[employees.length - 1].id + 1;
+                    // gets the existing employees to create a unique id based last employees id in the array
+                    db.query("SELECT * FROM employees", (err, employees) => {
+                      id = employees[employees.length - 1].id + 1;
 
-                    // creates the query string and valuess
-                    const sql = `INSERT INTO employees (id, first_name, last_name, role_id) VALUES (?, ?, ?, ?)`; // add roleId and '?' when role id is linked in schema
-                    const employeeValues = [
-                      id,
-                      a.firstName,
-                      a.lastName,
-                      chosenRoleId,
-                    ];
+                      // creates the query string and valuess
+                      const sql = `INSERT INTO employees (id, first_name, last_name, role_id, manager) VALUES (?, ?, ?, ?, ?)`; // add roleId and '?' when role id is linked in schema
+                      let chosenManager = a.manager;
+                      if (chosenManager === noManager) {
+                        chosenManager = "n/a";
+                      }
 
-                    // adds the new dept to the table
-                    db.query(sql, employeeValues);
-                    console.log(
-                      `${a.firstName} ${a.lastName} was added as an employee to the buisiness database`
-                    );
-                    askQuestions();
+                      const employeeValues = [
+                        id,
+                        a.firstName,
+                        a.lastName,
+                        chosenRoleId,
+                        chosenManager,
+                      ];
+
+                      // adds the new dept to the table
+                      db.query(sql, employeeValues);
+                      console.log(
+                        `${a.firstName} ${a.lastName} was added as an employee to the buisiness database`
+                      );
+                      askQuestions();
+                    });
                   });
                 });
-              });
+            });
           });
         } else if (answer.start == "Update Department") {
           // gets the list of existing depts
@@ -298,9 +317,13 @@ const start = () => {
                         // gets the id from the department that user has chosen during update
                         db.query("SELECT * FROM departments", (err, res) => {
                           const chosenDeptId =
-                            res[res.findIndex((x) => x.name == a.getDept)];
+                            res[
+                              res.findIndex(
+                                (x) => x.department_name == a.getDept
+                              )
+                            ].id;
                           // creates and executes the query to update the dept
-                          const sql = `UPDATE roles SET position_title = '${a.roleName}', position_salary = '${a.salary}', department_id = '${chosenDeptId}' WHERE id = ${chosenRoleId}`; // NEED TO ADD DEPARTMENT ID
+                          const sql = `UPDATE roles SET position_title = '${a.roleName}', position_salary = '${a.salary}', department_id = ${chosenDeptId} WHERE id = ${chosenRoleId}`; // NEED TO ADD DEPARTMENT ID
                           db.query(sql);
 
                           askQuestions();
@@ -343,41 +366,61 @@ const start = () => {
                     const roles = res.map(
                       ({ position_title }) => position_title
                     );
-                    inquirer
-                      .prompt([
-                        {
-                          type: "input",
-                          name: "firstName",
-                          message: "What is the employee's first name?",
-                        },
-                        {
-                          type: "input",
-                          name: "lastName",
-                          message: "What is the employee's last name?",
-                        },
-                        {
-                          type: "list",
-                          name: "getRole",
-                          message: "What role does the employee fulfill?",
-                          choices: roles,
-                        },
-                      ])
-                      .then((a) => {
-                        // gets the id from the role that user has chosen during update
-                        db.query("SELECT * FROM roles", (err, res) => {
-                          const chosenRoleId =
-                            res[
-                              res.findIndex(
-                                (x) => x.position_title == a.getRole
-                              )
-                            ].id;
+                    db.query("SELECT * FROM employees", (err, res) => {
+                      const managers = res.map(
+                        ({ first_name, last_name }) =>
+                          first_name + " " + last_name
+                      );
 
-                          const sql = `UPDATE employees SET first_name = '${a.firstName}', last_name = '${a.lastName}', role_id = '${chosenRoleId}' WHERE id = ${chosenEmployeeId}`; // NEED TO ADD THE ROLE ID
-                          db.query(sql);
+                      const noManager = "Does not report to superior.";
+                      managers.push(noManager);
+                      inquirer
+                        .prompt([
+                          {
+                            type: "input",
+                            name: "firstName",
+                            message: "What is the employee's first name?",
+                          },
+                          {
+                            type: "input",
+                            name: "lastName",
+                            message: "What is the employee's last name?",
+                          },
+                          {
+                            type: "list",
+                            name: "getRole",
+                            message: "What role does the employee fulfill?",
+                            choices: roles,
+                          },
+                          {
+                            type: "list",
+                            name: "manager",
+                            message: "Who does this employee report too?",
+                            choices: managers,
+                          },
+                        ])
+                        .then((a) => {
+                          // gets the id from the role that user has chosen during update
+                          db.query("SELECT * FROM roles", (err, res) => {
+                            const chosenRoleId =
+                              res[
+                                res.findIndex(
+                                  (x) => x.position_title == a.getRole
+                                )
+                              ].id;
 
-                          askQuestions();
+                            let chosenManager = a.manager;
+                            if (chosenManager === noManager) {
+                              chosenManager = "n/a";
+                            }
+
+                            const sql = `UPDATE employees SET first_name = '${a.firstName}', last_name = '${a.lastName}', role_id = '${chosenRoleId}', manager = '${chosenManager}' WHERE id = ${chosenEmployeeId}`; // NEED TO ADD THE ROLE ID
+                            db.query(sql);
+
+                            askQuestions();
+                          });
                         });
-                      });
+                    });
                   });
                 });
               });
